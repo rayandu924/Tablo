@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using MongoDB.Driver;
 using MongoDB.Bson;
-
+using TMPro;
 public class DbConnection : MonoBehaviour {
 
 	const string dbUrl = "mongodb+srv://123:123@cluster0.vgila.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
