@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using TMPro;
 public class DbConnection 
 {
@@ -24,11 +25,14 @@ public class DbConnection
 		collection = database.GetCollection<BsonDocument>(dbCollection);
 	}
 
-	public BsonDocument ReadGrid(int x,int z){
+	public GridJson ReadGrid(int x,int z){
 		FilterDefinition<BsonDocument> xfilter = Builders<BsonDocument>.Filter.Eq("x", x);
 		FilterDefinition<BsonDocument> zfilter = Builders<BsonDocument>.Filter.Eq("z", z);
-		BsonDocument GridDocument = collection.Find(xfilter & zfilter).FirstOrDefault();
-		return BsonDocument.Parse(GridDocument.ToJson());
+		var GridDocument = collection.Find(xfilter & zfilter).FirstOrDefault();
+		if (GridDocument == null)
+			return null;
+		var result = BsonSerializer.Deserialize<GridJson>(GridDocument);
+		return result;
 	}
 	public void SaveGrid(int x,int z,int tile,int building){
 		var document = new BsonDocument
@@ -41,3 +45,11 @@ public class DbConnection
 		collection.InsertOne(document);
 	}
 }
+public class GridJson{
+	 public BsonObjectId _id;
+     public int x;
+     public int z;
+     public int tile;
+     public int building;
+
+};

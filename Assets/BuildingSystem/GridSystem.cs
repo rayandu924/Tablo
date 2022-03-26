@@ -7,7 +7,7 @@ public class GridSystem : MonoBehaviour
     private int[] corner;
 
     public GameObject temp;
-    public DbConnection dbConnection = new DbConnection("Map", "MapCollection1");
+    public DbConnection dbConnection = new DbConnection("Map", "MapCollection");
 
     private void Start(){
         corner = new int[] {-Dimension, Dimension};

@@ -13,17 +13,18 @@ public class GridContent : MonoBehaviour
         foreach (Transform child in transform)
             Destroy(child.gameObject);
         var DbGrid = transform.parent.GetComponent<GridSystem>().dbConnection.ReadGrid(x,z);
-        Debug.Log(DbGrid);
-        Debug.Log(DbGrid.ToString());
         if(DbGrid == null){
             transform.parent.GetComponent<GridSystem>().dbConnection.SaveGrid(x,z,Random.Range(0,255),Random.Range(0,255));
             Reload();
         }
         else{
+            Debug.Log(DbGrid.building);
             Tiles = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
             Tiles.transform.name = "Tiles";
             Tiles.transform.SetParent(gameObject.transform,false);
-            Tiles.GetComponent<SpriteRenderer>().color = new Color(0,0,0);
+            SpriteRenderer spriteRenderer = Tiles.transform.GetComponent<SpriteRenderer>();
+            Color color = new Color(DbGrid.building,DbGrid.building,DbGrid.building);
+            spriteRenderer.color = color;
             /*Building = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
             Building.transform.name = "Building";
             Building.transform.SetParent(gameObject.transform,false);*/
