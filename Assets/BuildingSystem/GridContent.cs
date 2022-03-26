@@ -6,23 +6,28 @@ public class GridContent : MonoBehaviour
 {  
     public GameObject Tiles;
     public GameObject Building;
-
     public int x;
     public int z;
-    
+
     public void Reload() {
         foreach (Transform child in transform)
             Destroy(child.gameObject);
-        var gridContent = new DbConnection("Map", "MapCollection").ReadGrid(x,z);
-        if(gridContent == null)
-            new DbConnection("Map", "MapCollection").SaveGrid(x,z,0,0);
-
-        /*Tiles = Instantiate(TilesPrefab);
-        Tiles.transform.name = "Tiles";
-        Tiles.transform.SetParent(gameObject.transform,false);
-        Building = Instantiate(BuildingPrefab);
-        Building.transform.name = "Building";
-        Building.transform.SetParent(gameObject.transform,false);*/
+        var DbGrid = transform.parent.GetComponent<GridSystem>().dbConnection.ReadGrid(x,z);
+        Debug.Log(DbGrid);
+        Debug.Log(DbGrid.ToString());
+        if(DbGrid == null){
+            transform.parent.GetComponent<GridSystem>().dbConnection.SaveGrid(x,z,Random.Range(0,255),Random.Range(0,255));
+            Reload();
+        }
+        else{
+            Tiles = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
+            Tiles.transform.name = "Tiles";
+            Tiles.transform.SetParent(gameObject.transform,false);
+            Tiles.GetComponent<SpriteRenderer>().color = new Color(0,0,0);
+            /*Building = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
+            Building.transform.name = "Building";
+            Building.transform.SetParent(gameObject.transform,false);*/
+        }
     }
     void OnBecameInvisible() {
         Destroy(gameObject);

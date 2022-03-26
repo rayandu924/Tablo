@@ -28,7 +28,7 @@ public class DbConnection
 		FilterDefinition<BsonDocument> xfilter = Builders<BsonDocument>.Filter.Eq("x", x);
 		FilterDefinition<BsonDocument> zfilter = Builders<BsonDocument>.Filter.Eq("z", z);
 		BsonDocument GridDocument = collection.Find(xfilter & zfilter).FirstOrDefault();
-		return GridDocument;
+		return BsonDocument.Parse(GridDocument.ToJson());
 	}
 	public void SaveGrid(int x,int z,int tile,int building){
 		var document = new BsonDocument
