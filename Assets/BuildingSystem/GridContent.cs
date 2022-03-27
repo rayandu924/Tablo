@@ -14,20 +14,19 @@ public class GridContent : MonoBehaviour
             Destroy(child.gameObject);
         var DbGrid = transform.parent.GetComponent<GridSystem>().dbConnection.ReadGrid(x,z);
         if(DbGrid == null){
-            transform.parent.GetComponent<GridSystem>().dbConnection.SaveGrid(x,z,Random.Range(0,255),Random.Range(0,255));
+            transform.parent.GetComponent<GridSystem>().dbConnection.SaveGrid(x,z,Random.Range(0,3),Random.Range(0,3));
             Reload();
         }
         else{
-            Debug.Log(DbGrid.building);
-            Tiles = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
+            Tiles = Instantiate(Resources.Load<GameObject>("GridPrefabs/"+ DbGrid.tile));
             Tiles.transform.name = "Tiles";
             Tiles.transform.SetParent(gameObject.transform,false);
-            SpriteRenderer spriteRenderer = Tiles.transform.GetComponent<SpriteRenderer>();
-            Color color = new Color(DbGrid.building,DbGrid.building,DbGrid.building);
-            spriteRenderer.color = color;
-            /*Building = Instantiate(transform.parent.GetComponent<GridSystem>().temp);
-            Building.transform.name = "Building";
-            Building.transform.SetParent(gameObject.transform,false);*/
+            if(DbGrid.building != 0)
+            {
+                Building = Instantiate(Resources.Load<GameObject>("BuildingPrefabs/"+ DbGrid.building));
+                Building.transform.name = "Building";
+                Building.transform.SetParent(gameObject.transform,false);
+            }
         }
     }
     void OnBecameInvisible() {
