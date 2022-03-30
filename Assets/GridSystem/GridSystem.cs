@@ -4,15 +4,12 @@ public class GridSystem : MonoBehaviour
 {
     public int Dimension;
     public GameObject Player;
-    private int[] corner;
-
-    public GameObject temp;
     public DbConnection dbConnection = new DbConnection("Map", "MapCollection");
 
     private void Start(){
         int Px = Mathf.RoundToInt(Player.transform.position.x);
         int Pz = Mathf.RoundToInt(Player.transform.position.z);
-        for (int x = -Dimension ; x < Dimension; x++) // -5 4
+        for (int x = -Dimension ; x < Dimension; x++)
             for (int z = -Dimension; z < Dimension; z++)
                 if (transform.Find((x+Px)+","+(z+Pz)) == null)
                     new Grids(x+Px,z+Pz,transform);

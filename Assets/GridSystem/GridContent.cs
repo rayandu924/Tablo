@@ -23,9 +23,9 @@ public class GridContent : MonoBehaviour
             Tiles.transform.SetParent(gameObject.transform,false);
             if(DbGrid.building != 0)
             {
-                Building = Instantiate(Resources.Load<GameObject>("BuildingPrefabs/"+ DbGrid.building));
+                /*Building = Instantiate(Resources.Load<GameObject>("BuildingPrefabs/"+ DbGrid.building));
                 Building.transform.name = "Building";
-                Building.transform.SetParent(gameObject.transform,false);
+                Building.transform.SetParent(gameObject.transform,false);*/
             }
         }
     }
