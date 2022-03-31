@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
-using System;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using TMPro;
-public class DbConnection 
+public class DbConnection
 {
 	const string dbUrl = "mongodb+srv://123:123@cluster0.vgila.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 	private string dbName;
@@ -25,31 +25,28 @@ public class DbConnection
 		collection = database.GetCollection<BsonDocument>(dbCollection);
 	}
 
-	public GridJson ReadGrid(int x,int z){
+	public async Task<GridsJson> ReadGrids(int x,int z){
 		FilterDefinition<BsonDocument> xfilter = Builders<BsonDocument>.Filter.Eq("x", x);
 		FilterDefinition<BsonDocument> zfilter = Builders<BsonDocument>.Filter.Eq("z", z);
-		var GridDocument = collection.Find(xfilter & zfilter).FirstOrDefault();
+		var GridDocument = await collection.Find(xfilter & zfilter).FirstOrDefaultAsync();
 		if (GridDocument == null)
 			return null;
-		var result = BsonSerializer.Deserialize<GridJson>(GridDocument);
+		var result = BsonSerializer.Deserialize<GridsJson>(GridDocument);
 		return result;
 	}
-	public void SaveGrid(int x,int z,int tile,int building){
+	public async Task SaveGrids(int x,int z,string tiles){
 		var document = new BsonDocument
 		{
 		{"x",x},
 		{"z",z},
-		{"tile", tile},
-		{"building", building}
+		{"tiles", tiles},
 		};
-		collection.InsertOne(document);
+		await collection.InsertOneAsync(document);
 	}
 }
-public class GridJson{
+public class GridsJson{
 	 public BsonObjectId _id;
      public int x;
      public int z;
-     public int tile;
-     public int building;
-
+     public string tiles;
 };

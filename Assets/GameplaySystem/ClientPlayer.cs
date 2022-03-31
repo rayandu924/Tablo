@@ -36,14 +36,14 @@ public class ClientPlayer : MonoBehaviour
                 RaycastHit hit;
                 if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, pickUpRange))
                 {
-                    if(hit.transform.gameObject.GetComponent<Rigidbody>())// objet prenable ?
+                    if(hit.transform.gameObject.GetComponent<DataWeapons>())// objet prenable ?
+                    {
+                        
+                    }
+                    else if(hit.transform.gameObject.GetComponent<Rigidbody>())
                     {
                         PickupObject(hit.transform.gameObject);
                         CreateGhostObject();
-                    }
-                    else
-                    {
-                        //  interagire avec l'objet
                     }
                 }
             }
@@ -71,6 +71,11 @@ public class ClientPlayer : MonoBehaviour
                 MoveObject();
             }
         }
+
+        if (Input.GetKeyDown(KeyCode. G))
+        {
+            DropItem();
+        }
     }
 
     void PickupObject(GameObject obj)
@@ -95,6 +100,20 @@ public class ClientPlayer : MonoBehaviour
         rb.useGravity = true;
         heldObject.layer = 0;
         heldObject = null;
+    }
+
+    void DropItem()
+    {
+        GameObject entity = new GameObject();
+        entity.AddComponent<DataWeapons>().Initialize(weaponsDatas[weaponsSelected]);
+        weaponsDatas.RemoveAt(weaponsSelected);
+    }
+
+    void GetItem(GameObject entity)//ici qu'on va faire en sorte de trier les item recuperable et quest ce qui recupere
+    {
+        WeaponsData dataWeapons = entity.GetComponent<DataWeapons>().weaponsData;
+        weaponsDatas.Add(new WeaponsData(dataWeapons.weaponModel,dataWeapons.material,dataWeapons.cam,10,10,3,10,0.1f,10,1,1,10,false,true,false,true,false,text));
+        Destroy(entity);
     }
 
     void PlaceObject(RaycastHit hit)
