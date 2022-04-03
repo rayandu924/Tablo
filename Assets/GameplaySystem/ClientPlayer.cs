@@ -12,18 +12,26 @@ public class ClientPlayer : MonoBehaviour
     public Mesh mesh;
     GameObject heldObject;
     public GameObject currentWeapon;
-    public TextMeshProUGUI text;
-    public List<WeaponsData> weaponsDatas = new List<WeaponsData>();
+    public GameObject hand;
+    public List<WeaponsData> WeaponsList = new List<WeaponsData>();
     public int weaponsSelected;
     public float temp;
-    
+    public Canvas canvas;
+    GameObject UIWeapon;
+    TextMeshProUGUI UIammo, UIname;
     private void Start() {
-        weaponsDatas.Add(new WeaponsData(mesh,Resources.Load<Material>("Materials/0"),gameObject.GetComponent<Camera>(),10,10,3,10,0.1f,10,1,1,10,false,true,false,true,false,text));
-        weaponsDatas.Add(new WeaponsData(mesh,Resources.Load<Material>("Materials/0"),gameObject.GetComponent<Camera>(),10,10,3,10,0.1f,10,1,1,10,false,true,false,true,false,text));
-        weaponsDatas.Add(new WeaponsData(mesh,Resources.Load<Material>("Materials/0"),gameObject.GetComponent<Camera>(),10,10,3,10,0.1f,10,1,1,10,false,true,false,true,false,text));
+        
+        WeaponsList.Add(new WeaponsData(gameObject,"Hand",mesh,mesh,Resources.Load<Material>("Materials/0"),1, 20, 20, 2, 10, 10, 0.8f, 0.1f, 0.2f, 10f, true));
+        WeaponsList.Add(new WeaponsData(gameObject,"Pompe",mesh,mesh,Resources.Load<Material>("Materials/0"),0, 20, 20, 2, 10, 10, 0.8f, 0.1f, 0.2f, 10f, true));
+        UIWeapon = Instantiate(Resources.Load<GameObject>("UI/WeaponUI"));
+        UIWeapon.transform.SetParent(gameObject.GetComponentInChildren<Canvas>().transform, false);
+        UIname = UIWeapon.transform.Find("Name").GetComponent<TextMeshProUGUI>();
+        UIammo = UIWeapon.transform.Find("Ammo").GetComponent<TextMeshProUGUI>();
+        EquipWeapon(0);
     }
     private void Update() {
         ObjectUpdate();
+        UIUpdate();
         WeaponsSelectorUpdate();
     }
 
@@ -36,9 +44,9 @@ public class ClientPlayer : MonoBehaviour
                 RaycastHit hit;
                 if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, pickUpRange))
                 {
-                    if(hit.transform.gameObject.GetComponent<DataWeapons>())// objet prenable ?
+                    if(hit.transform.gameObject.GetComponent<Entity>())// objet prenable ? avec les tag triage
                     {
-                        
+                        InteractEntity(hit.transform.gameObject);
                     }
                     else if(hit.transform.gameObject.GetComponent<Rigidbody>())
                     {
@@ -74,7 +82,7 @@ public class ClientPlayer : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode. G))
         {
-            DropItem();
+            DropWeapons();
         }
     }
 
@@ -102,25 +110,10 @@ public class ClientPlayer : MonoBehaviour
         heldObject = null;
     }
 
-    void DropItem()
-    {
-        GameObject entity = new GameObject();
-        entity.AddComponent<DataWeapons>().Initialize(weaponsDatas[weaponsSelected]);
-        weaponsDatas.RemoveAt(weaponsSelected);
-    }
-
-    void GetItem(GameObject entity)//ici qu'on va faire en sorte de trier les item recuperable et quest ce qui recupere
-    {
-        WeaponsData dataWeapons = entity.GetComponent<DataWeapons>().weaponsData;
-        weaponsDatas.Add(new WeaponsData(dataWeapons.weaponModel,dataWeapons.material,dataWeapons.cam,10,10,3,10,0.1f,10,1,1,10,false,true,false,true,false,text));
-        Destroy(entity);
-    }
-
     void PlaceObject(RaycastHit hit)
     {
-        Rigidbody rb = heldObject.GetComponent<Rigidbody>();
-        rb.useGravity = true;
-        rb.transform.localPosition = hit.point;
+        Destroy(heldObject.GetComponent<Rigidbody>());
+        if(hit.transform.gameObject.tag == "Grid")
         heldObject.layer = 0;
         heldObject = null;
     }
@@ -138,9 +131,9 @@ public class ClientPlayer : MonoBehaviour
     {
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         rb.useGravity = true;
+        rb.AddForce(transform.forward * throwForce,ForceMode.Impulse);
         heldObject.layer = 0;
         heldObject = null;
-        rb.AddForce(transform.forward * throwForce,ForceMode.Impulse);
     }
     IEnumerator UpdateGhostObject(GameObject ghostObject)
     {     
@@ -150,59 +143,64 @@ public class ClientPlayer : MonoBehaviour
             if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, pickUpRange))
             {
                 ghostObject.transform.position = hit.point;
+                if(hit.transform.gameObject.tag == "Grid")
+                    ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/1");
+                else
+                    ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/0");
             }
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.05f);
         }
         Destroy(ghostObject);
     }
 
-    void CreateWeapon(int i)
+    void EquipWeapon(int i)
     {
         Destroy(currentWeapon);
-        GameObject weapon = new GameObject();
-        weapon.AddComponent<Weapons>().Initialize(weaponsDatas[i].weaponModel, weaponsDatas[i].material, weaponsDatas[i].cam, weaponsDatas[i].damage, weaponsDatas[i].magazineSize, weaponsDatas[i].bulletsPerTap, weaponsDatas[i].bulletsLeft, weaponsDatas[i].spread, weaponsDatas[i].range, weaponsDatas[i].reloadTime, weaponsDatas[i].timeBetweenShots, weaponsDatas[i].force, weaponsDatas[i].melee, weaponsDatas[i].allowButtonHold, weaponsDatas[i].shooting, weaponsDatas[i].readyToShoot, weaponsDatas[i].reloading, weaponsDatas[i].text);
+        GameObject weapon = new GameObject("weapon",typeof(MeshFilter),typeof(MeshRenderer));
         currentWeapon = weapon;
-        weapon.transform.parent = gameObject.transform;
+        switch (WeaponsList[i].typeOfWeapons)
+        {
+            case 0 : weapon.AddComponent<WeaponsGuns>().Init(WeaponsList[i]); break;
+            case 1 : weapon.AddComponent<WeaponsMelee>().Init(WeaponsList[i]); break;
+            default: Debug.Log("Error"); break;
+        }
+    }
+
+    void DropWeapons()
+    {
+        if(weaponsSelected == 0)
+            return;
+        WeaponsList.RemoveAt(weaponsSelected);
+        currentWeapon.GetComponent<Weapons>().ToEntity();
+        currentWeapon = hand;
+        EquipWeapon(weaponsSelected = 0);
+    }
+
+    void InteractEntity(GameObject entity)//ici qu'on va faire en sorte de trier les item recuperable et quest ce qui recupere
+    {
+        EntityWeapons entityWeapons = entity.GetComponent<EntityWeapons>();
+        if(entity != null){
+            entityWeapons.OnInteraction(gameObject);
+        }
     }
 
     void WeaponsSelectorUpdate()
     {
         if(Input.GetKeyDown(KeyCode. P))
-            CreateWeapon(weaponsSelected = ((weaponsSelected+1)%weaponsDatas.Count+weaponsDatas.Count)%weaponsDatas.Count);
+            EquipWeapon(weaponsSelected = Clamp(WeaponsList.Count, weaponsSelected, 1));
         else if(Input.GetKeyDown(KeyCode. M))
-            CreateWeapon(weaponsSelected = ((weaponsSelected-1)%weaponsDatas.Count+weaponsDatas.Count)%weaponsDatas.Count);
+            EquipWeapon(weaponsSelected = Clamp(WeaponsList.Count, weaponsSelected, -1));
+    }
+
+    int Clamp(int max, int value, int add){
+        return ((value+add)%max+max)%max;
+    }
+
+    private void UIUpdate() {
+        if(currentWeapon != hand)
+        {
+            UIname.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.Name);
+            UIammo.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.magazine +" / "+ currentWeapon.GetComponent<Weapons>().weaponsData.magazineSize);
+        }
     }
 }
-public class WeaponsData{
-	public Mesh weaponModel, bulletModel;
-    public Material material;
-    public Camera cam;
-    public TextMeshProUGUI text;
-    public int damage, magazineSize, bulletsPerTap, bulletsLeft;
-    public float spread, range, reloadTime, timeBetweenShots, force;
-    public bool melee, allowButtonHold, shooting, readyToShoot, reloading;
-
-    public WeaponsData(Mesh weaponModel,Material material,Camera cam,int damage,int magazineSize,int bulletsPerTap,int bulletsLeft, float spread,float range,float reloadTime,float timeBetweenShots,float force,bool melee,bool allowButtonHold,bool shooting,bool readyToShoot,bool reloading, TextMeshProUGUI text)
-    {
-        /*bulletsLeft = magazineSize;
-        readyToShoot = true;*/
-        this.weaponModel = weaponModel;
-        this.material = material;
-        this.cam = cam;
-        this.damage = damage;
-        this.magazineSize = magazineSize;
-        this.bulletsPerTap = bulletsPerTap;
-        this.bulletsLeft = bulletsLeft;
-        this.spread = spread;
-        this.range = range;
-        this.reloadTime = reloadTime;
-        this.timeBetweenShots = timeBetweenShots;
-        this.force = force;
-        this.melee = melee;
-        this.allowButtonHold = allowButtonHold;
-        this.shooting = shooting;
-        this.readyToShoot = readyToShoot;
-        this.reloading = reloading;
-        this.text = text;
-    }
-};

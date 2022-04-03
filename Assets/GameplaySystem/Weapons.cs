@@ -2,110 +2,69 @@ using UnityEngine;
 using TMPro;
 
 
-public class Weapons : MonoBehaviour
+public abstract class Weapons : MonoBehaviour
 {
-    //Gun stats
+    public WeaponsData weaponsData;
+    public bool readyToUse, shooting, reloading;
+    public void Init(WeaponsData weaponsData){
+        this.weaponsData = weaponsData;
+        transform.position = weaponsData.Player.transform.position;
+        transform.parent = weaponsData.Player.transform;
+        GetComponent<MeshFilter>().mesh = weaponsData.weaponModel;
+        GetComponent<MeshRenderer>().material = weaponsData.material;
+        readyToUse = true;
+        shooting = false;
+        reloading = false;
+    }
+
+    protected void Use()
+    {
+        readyToUse = false;
+        Fire();
+        Invoke("ResetUse", weaponsData.timeBetweenShots);
+    }
+
+    protected abstract void Fire();
+    protected void ResetUse()
+    {
+        readyToUse = true;
+    }
+
+    public void ToEntity()
+    {
+        GameObject Weapon = new GameObject();
+        EntityWeapons entityWeapons = Weapon.AddComponent<EntityWeapons>();
+        entityWeapons.weaponsData = weaponsData;
+        Weapon.transform.position = weaponsData.Player.transform.position;
+        Destroy(gameObject);
+    }
+}
+public class WeaponsData
+{
+    public GameObject Player;
+    public string Name;
     public Mesh weaponModel, bulletModel;
     public Material material;
-    public Camera cam;
-    public TextMeshProUGUI text;
-    public int damage, magazineSize, bulletsPerTap, bulletsLeft;
-    public float spread, range, reloadTime, timeBetweenShots, force;
-    public bool melee, allowButtonHold, shooting, readyToShoot, reloading;
-    public void Initialize(Mesh weaponModel,Material material,Camera cam,int damage,int magazineSize,int bulletsPerTap,int bulletsLeft, float spread,float range,float reloadTime,float timeBetweenShots,float force,bool melee,bool allowButtonHold,bool shooting,bool readyToShoot,bool reloading, TextMeshProUGUI text)
+    public int typeOfWeapons,magazineSize, magazine, bulletsPerTap;
+    public float damage, range, timeBetweenShots, spread, reloadTime, speed;
+    public bool allowButtonHold;
+    public WeaponsData(GameObject Player, string Name,Mesh weaponModel,Mesh bulletModel,Material material,int typeOfWeapons, int magazineSize,int magazine,int bulletsPerTap, float damage, float range, float timeBetweenShots, float spread, float reloadTime, float speed, bool allowButtonHold)
     {
-        /*bulletsLeft = magazineSize;
-        readyToShoot = true;*/
-        MeshFilter meshFilter = gameObject.AddComponent<MeshFilter>();
-        meshFilter.mesh = weaponModel;
-        MeshRenderer meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        meshRenderer.material = material;
+        this.Player = Player;
+        this.Name = Name;
         this.weaponModel = weaponModel;
+        this.bulletModel = bulletModel;
         this.material = material;
-        this.cam = cam;
-        this.damage = damage;
+        this.typeOfWeapons = typeOfWeapons;
         this.magazineSize = magazineSize;
+        this.magazine = magazine;
         this.bulletsPerTap = bulletsPerTap;
-        this.bulletsLeft = bulletsLeft;
-        this.spread = spread;
+        this.damage = damage;
         this.range = range;
-        this.reloadTime = reloadTime;
         this.timeBetweenShots = timeBetweenShots;
-        this.force = force;
-        this.melee = melee;
+        this.spread = spread;
+        this.reloadTime = reloadTime;
+        this.speed = speed;
         this.allowButtonHold = allowButtonHold;
-        this.shooting = shooting;
-        this.readyToShoot = readyToShoot;
-        this.reloading = reloading;
-        this.text = text;
-    }
-
-    private void Update()
-    {
-        MyInput();
-        text.SetText(bulletsLeft + " / " + magazineSize);
-    }
-    private void MyInput()
-    {
-        if (allowButtonHold) shooting = Input.GetKey(KeyCode.Mouse0);
-        else shooting = Input.GetKeyDown(KeyCode.Mouse0);
-
-        if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !reloading) Reload();
-
-        //Shoot
-        if (readyToShoot && shooting && !reloading && bulletsLeft > 0){
-            Shoot();
-        }
-    }
-    private void Shoot()
-    {
-        readyToShoot = false;
-        if(melee)
-        {
-            //raycast
-            RaycastHit hit;
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, range))
-            {
-                Debug.Log(hit.collider.name);
-
-                //if (rayHit.collider.CompareTag("Enemy"))
-                    // degat
-            }
-        }
-        else
-        {
-            //Spawn bullets
-            for (int i = 0; i < bulletsPerTap; i++)
-            {   
-                GameObject bullet = new GameObject();
-                bullet.transform.position = cam.transform.position + cam.transform.forward;
-                bullet.transform.rotation = cam.transform.rotation;
-                Rigidbody rigidbody = bullet.AddComponent<Rigidbody>();
-                rigidbody.AddForce((cam.transform.forward + new Vector3(Random.Range(-spread, spread), Random.Range(-spread, spread), 0)) * force, ForceMode.Impulse);
-                MeshFilter meshFilter = bullet.AddComponent<MeshFilter>();
-                meshFilter.mesh = weaponModel;
-                MeshRenderer meshRenderer = bullet.AddComponent<MeshRenderer>();
-                meshRenderer.material = material;
-                BoxCollider boxCollider = bullet.AddComponent<BoxCollider>();
-                //component online
-                Object.Destroy(bullet, 3.0f);
-            }
-            bulletsLeft--;
-        }
-        Invoke("ResetShot", timeBetweenShots);
-    }
-    private void ResetShot()
-    {
-        readyToShoot = true;
-    }
-    private void Reload()
-    {
-        reloading = true;
-        Invoke("ReloadFinished", reloadTime);
-    }
-    private void ReloadFinished()
-    {
-        bulletsLeft = magazineSize;
-        reloading = false;
     }
 }

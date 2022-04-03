@@ -33,10 +33,10 @@ public class GridSystem : MonoBehaviour
 
     private async void LoadChunk(int _x, int _z){
         GameObject chunk = new GameObject(); 
-        Chunks.Add(chunk);
-        chunk.transform.name = _x+","+_z;
         chunk.transform.SetParent(Map.transform,true);
+        chunk.transform.name = _x+","+_z;
         chunk.transform.position = new Vector3(_x,0,_z);
+        Chunks.Add(chunk);
         var TaskgridsJson = dbConnection.ReadGrids(_x,_z);
         var gridsJson = await TaskgridsJson;
         if (gridsJson == null){
@@ -47,7 +47,7 @@ public class GridSystem : MonoBehaviour
         List<int> grids = gridsJson.tiles.Split(',').Select(Int32.Parse).ToList();
                 for (int x = _x ; x < _x+10; x++)
                     for (int z = _z; z < _z+10; z++)
-                        CreateGrid(chunk,x,z,grids[(x-_x)*10+(z-_z)]);
+                        CreateGrid(chunk,x,z,grids[(x-_x)*10+(z-_z)],0);
         if(Chunks.Count > MaxChunks){
             GameObject obj = FarthestChunk(Chunks);
             Chunks.Remove(obj);
@@ -69,12 +69,14 @@ public class GridSystem : MonoBehaviour
         return grids;
     }
 
-    private void CreateGrid(GameObject chunk, int x, int z, int gridData)
+    private void CreateGrid(GameObject chunk, int x, int z, int gridData, int buildData)
     {
         GameObject grid = Instantiate(Resources.Load<GameObject>("GridPrefabs/"+gridData));
         grid.transform.name = x+","+z;
         grid.transform.position = new Vector3(x,0,z);
         grid.transform.SetParent(chunk.transform,true);
+        GameObject build = Instantiate(Resources.Load<GameObject>("BuildingPrefabs/"+buildData));
+        build.transform.SetParent(chunk.transform,false);        
         //need to reload when players make changes
     }
 
