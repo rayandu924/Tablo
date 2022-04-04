@@ -14,7 +14,7 @@ public class ClientPlayer : MonoBehaviour
     public GameObject currentWeapon;
     public GameObject hand;
     public List<WeaponsData> WeaponsList = new List<WeaponsData>();
-    public int weaponsSelected;
+    public int weaponsSelected, objectrotation;
     public float temp;
     public Canvas canvas;
     GameObject UIWeapon;
@@ -74,6 +74,10 @@ public class ClientPlayer : MonoBehaviour
             {
                 ThrowObject();
             }
+            else if(Input.GetKeyDown(KeyCode. K))
+            {
+                objectrotation = (objectrotation+90)%360;            
+            }
             else
             {
                 MoveObject();
@@ -113,7 +117,8 @@ public class ClientPlayer : MonoBehaviour
     void PlaceObject(RaycastHit hit)
     {
         Destroy(heldObject.GetComponent<Rigidbody>());
-        if(hit.transform.gameObject.tag == "Grid")
+        heldObject.transform.position =  hit.transform.position;
+        heldObject.transform.rotation =  Quaternion.Euler(0,objectrotation,0);;
         heldObject.layer = 0;
         heldObject = null;
     }
@@ -143,8 +148,11 @@ public class ClientPlayer : MonoBehaviour
             if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, pickUpRange))
             {
                 ghostObject.transform.position = hit.point;
-                if(hit.transform.gameObject.tag == "Grid")
+                ghostObject.transform.localRotation =  Quaternion.Euler(0,objectrotation,0);
+                if(hit.transform.gameObject.tag == "Grid"){
                     ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/1");
+                    ghostObject.transform.position =  hit.transform.position;
+                }
                 else
                     ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/0");
             }
