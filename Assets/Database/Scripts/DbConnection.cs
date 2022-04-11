@@ -13,7 +13,7 @@ public class DbConnection
 	private string dbCollection;
 	MongoClient client;
 	IMongoDatabase database;
-	IMongoCollection<BsonDocument> collection;
+	public IMongoCollection<BsonDocument> collection;
 
 	// Use this for initialization
 	public DbConnection(string dbName, string dbCollection)

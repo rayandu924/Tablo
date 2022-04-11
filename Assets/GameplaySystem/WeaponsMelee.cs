@@ -22,10 +22,10 @@ public class WeaponsMelee : Weapons
     protected override void Fire()
     {
             //raycast
-            RaycastHit hit;
-            if (Physics.Raycast(transform.parent.position, transform.parent.forward, out hit, weaponsData.range))
+  //          RaycastHit hit;
+//            if (Physics.Raycast(transform.parent.position, transform.parent.forward, out hit, weaponsData.range))
             {
-                Debug.Log(hit.collider.name);
+    //            Debug.Log(hit.collider.name);
 
                 //if (rayHit.collider.CompareTag("Enemy"))
                     // degat

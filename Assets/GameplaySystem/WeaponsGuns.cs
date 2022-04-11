@@ -32,9 +32,9 @@ public class WeaponsGuns : Weapons
             MeshRenderer meshRenderer = bullet.AddComponent<MeshRenderer>();
             meshFilter.mesh = weaponsData.bulletModel;
             meshRenderer.material = weaponsData.material;
-            bullet.transform.position = transform.parent.position + transform.parent.transform.forward;
-            bullet.transform.rotation = transform.parent.rotation;
-            rigidbody.AddForce((transform.parent.transform.forward + new Vector3(Random.Range(-weaponsData.spread, weaponsData.spread), Random.Range(-weaponsData.spread, weaponsData.spread), 0)) * weaponsData.speed, ForceMode.Impulse);
+            bullet.transform.position = cam.transform.position + cam.transform.forward;
+            bullet.transform.rotation = cam.transform.rotation;
+            rigidbody.AddForce((cam.transform.forward + new Vector3(Random.Range(-weaponsData.spread, weaponsData.spread), Random.Range(-weaponsData.spread, weaponsData.spread), 0)) * weaponsData.speed, ForceMode.Impulse);
             Object.Destroy(bullet, 3.0f);
         }
         weaponsData.magazine--;
