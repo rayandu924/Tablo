@@ -2,6 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
 using TMPro;
+using UnityEngine.UI;
+using System.Linq;
+using UnityEditor;
+
 
 public class ClientPlayer : MonoBehaviour
 {
@@ -13,15 +17,11 @@ public class ClientPlayer : MonoBehaviour
     public GameObject currentWeapon;
     public GameObject hand;
     public List<WeaponsData> weapons = new List<WeaponsData>();
-    public int weaponsSelected = 0, objectrotation=0;
+    public int weaponsSelected = 0, objectrotation = 0;
     public float temp;
     public Canvas canvas;
-    GameObject UIWeapon;
-    TextMeshProUGUI UIweaponAmmo, UIweaponName;
-    private Animator animator;
+    public TextMeshProUGUI UIweaponAmmo, UIweaponName;
     public Camera cam;
-
-    public float Speed = 5f;
     public float JumpHeight = 2f;
     public float GroundDistance = 0.2f;
     public float DashDistance = 5f;
@@ -30,34 +30,28 @@ public class ClientPlayer : MonoBehaviour
     public Vector3 inputsRot = Vector3.zero;
     public bool _isGrounded = true;
     public Transform _groundChecker;
-    public GameObject leftHand;
-    public GameObject rightHand;
     public int sensSpeed;
     public int sensSpeedRun;
     public int SensMouse;
-
-
-    private void Awake()
-    {
-        animator = GetComponent<Animator>();
-    }
+    public List<GameObject> SpawnmenuPrefab= new List<GameObject>();
+    public GameObject ButtonPrefab;
+    public GameObject content;
+    public GameObject SpawnMenu;
 
     void Start()
     {
-            transform.position = new Vector3(0,0,0);
-            weapons.Add(new WeaponsData(WeaponType.Melee, "Hand", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92), PlayerStateTop.Fire));
-            weapons.Add(new WeaponsData(WeaponType.Guns, "Pompe", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/1"), Resources.Load<Mesh>("Mesh/Axe"),20,20,2,10,1,1,5,0.1f,10,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
-            weapons.Add(new WeaponsData(WeaponType.Melee, "Hache", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
-            canvas = Instantiate(Resources.Load<GameObject>("UI/ClientCanvas"),transform,false).GetComponent<Canvas>();
-            UIweaponName = canvas.transform.Find("WeaponUI").Find("Name").GetComponent<TextMeshProUGUI>();
-            UIweaponAmmo = canvas.transform.Find("WeaponUI").Find("Ammo").GetComponent<TextMeshProUGUI>();
-            EquipWeapon(0);
+        SpawnmenuPrefab = Resources.LoadAll<GameObject>("BuildingPrefabs/").ToList();
+        weapons.Add(new WeaponsData(WeaponType.Melee, "Hand", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92), PlayerStateTop.Fire));
+        weapons.Add(new WeaponsData(WeaponType.Guns, "Pompe", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/1"), Resources.Load<Mesh>("Mesh/Axe"),20,20,2,10,1,1,5,0.1f,10,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
+        weapons.Add(new WeaponsData(WeaponType.Melee, "Hache", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
+        EquipWeapon(0);
+        initSpawnMenu();
     }
 
     void Update()
     {
-            updateController();
-            UIUpdate();
+        updateController();
+        UIUpdate();
     }
 
     void PickupObject(GameObject obj)
@@ -141,7 +135,7 @@ public class ClientPlayer : MonoBehaviour
         Destroy(currentWeapon);
         GameObject weapon = new GameObject("weapon",typeof(MeshFilter),typeof(MeshRenderer));
         currentWeapon = weapon;
-        weapon.transform.parent = rightHand.transform;
+        weapon.transform.parent = cam.transform;
         weapon.transform.localPosition = weapons[weaponsSelected].position;
         weapon.transform.localRotation = Quaternion.Euler(weapons[weaponsSelected].rotation);
         switch (weapons[weaponsSelected].weaponType)
@@ -175,14 +169,24 @@ public class ClientPlayer : MonoBehaviour
     }
 
     private void UIUpdate() {
-        if(currentWeapon != hand)
+        UIweaponName.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.name);
+        UIweaponAmmo.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.magazine +" / "+ currentWeapon.GetComponent<Weapons>().weaponsData.magazineSize);
+        if(ActiveSpawnMenuActionKey())
         {
-            UIweaponName.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.name);
-            UIweaponAmmo.SetText(currentWeapon.GetComponent<Weapons>().weaponsData.magazine +" / "+ currentWeapon.GetComponent<Weapons>().weaponsData.magazineSize);
+            SpawnMenu.SetActive(!SpawnMenu.activeSelf);
         }
     }
 
-    private void SpawnProps(int i) {
+    private void initSpawnMenu() {
+        foreach (var Prefab in SpawnmenuPrefab)
+        {
+            GameObject go = Instantiate(ButtonPrefab);
+            var button = go.GetComponent<Button>();
+            button.onClick.AddListener(() => Instantiate(Prefab, transform.position + transform.forward, transform.rotation));   
+            button.GetComponentInChildren<Image>().sprite = Sprite.Create(AssetPreview.GetAssetPreview(Prefab), new Rect(0,0,128,128), new Vector2(0,0), 1f);
+            button.GetComponentInChildren<TextMeshProUGUI>().text = Prefab.name;
+            go.transform.SetParent(content.transform);
+        }
         //GameObject Prop = Instantiate(Resources.Load<GameObject>(""),transform.position, transform.rotation);
     }
 
@@ -322,5 +326,9 @@ public class ClientPlayer : MonoBehaviour
     private static bool ActiveDashActionKey()
     {
         return Input.GetKeyDown(KeyCode.D);
+    }
+    private static bool ActiveSpawnMenuActionKey()
+    {
+        return Input.GetKeyDown(KeyCode.W);
     }
 }
