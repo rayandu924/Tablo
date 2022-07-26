@@ -43,6 +43,12 @@ public class DbConnection
 		};
 		await collection.InsertOneAsync(document);
 	}
+	public async Task UpdateGrids(int x,int z, string tiles){
+		FilterDefinition<BsonDocument> xfilter = Builders<BsonDocument>.Filter.Eq("x", x);
+		FilterDefinition<BsonDocument> zfilter = Builders<BsonDocument>.Filter.Eq("z", z);
+		UpdateDefinition<BsonDocument> update = Builders<BsonDocument>.Update.Set("tiles", tiles);
+		await collection.UpdateOneAsync(xfilter & zfilter, update);
+	}
 }
 public class GridsJson{
 	 public BsonObjectId _id;

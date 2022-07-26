@@ -13,8 +13,8 @@ GameObject:
   - component: {fileID: 2328585249805734399}
   - component: {fileID: 5916924687144438581}
   m_Layer: 0
-  m_Name: Bush
-  m_TagString: Untagged
+  m_Name: 5
+  m_TagString: EntityPickable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -55,6 +55,8 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -79,6 +81,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!64 &5916924687144438581
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -89,7 +92,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Convex: 0
-  m_CookingOptions: 14
+  serializedVersion: 4
+  m_Convex: 1
+  m_CookingOptions: 30
   m_Mesh: {fileID: 5958362384829529401, guid: 5c81e9317993fba43afcf431416cf177, type: 3}

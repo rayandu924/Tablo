@@ -5,6 +5,8 @@ using TMPro;
 using UnityEngine.UI;
 using System.Linq;
 using UnityEditor;
+using System;
+
 
 
 public class ClientPlayer : MonoBehaviour
@@ -37,12 +39,14 @@ public class ClientPlayer : MonoBehaviour
     public GameObject ButtonPrefab;
     public GameObject content;
     public GameObject SpawnMenu;
+    public GridSystem gridSystem;
 
+    public RaycastHit hit;
     void Start()
     {
         SpawnmenuPrefab = Resources.LoadAll<GameObject>("BuildingPrefabs/").ToList();
-        weapons.Add(new WeaponsData(WeaponType.Melee, "Hand", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92), PlayerStateTop.Fire));
-        weapons.Add(new WeaponsData(WeaponType.Guns, "Pompe", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/1"), Resources.Load<Mesh>("Mesh/Axe"),20,20,2,10,1,1,5,0.1f,10,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
+        weapons.Add(new WeaponsData(WeaponType.Melee, "Hand", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0,-0.352f,-0.119f), new Vector3(-181,-18,-71), PlayerStateTop.Fire));
+        weapons.Add(new WeaponsData(WeaponType.Guns, "Pompe", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/1"), Resources.Load<Mesh>("Mesh/bullet"),20,20,2,10,1,1,5,0.1f,10,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
         weapons.Add(new WeaponsData(WeaponType.Melee, "Hache", Resources.Load<Mesh>("Mesh/Axe"), Resources.Load<Material>("Materials/0"), Resources.Load<Mesh>("Mesh/Axe"),0,0,0,1,1,0,5,0,0,true,new Vector3(0.025f,-0.25f,-0.2f), new Vector3(-58,180,-92),PlayerStateTop.Fire));
         EquipWeapon(0);
         initSpawnMenu();
@@ -60,7 +64,8 @@ public class ClientPlayer : MonoBehaviour
         if(!(rb = obj.GetComponent<Rigidbody>()))
             rb = obj.AddComponent<Rigidbody>();
         obj.layer = 2;
-        rb.angularDrag = 7;
+        rb.useGravity = false;
+        rb.angularDrag = 10;
         heldObject = obj;
         CreateGhostObject();
     }
@@ -77,6 +82,7 @@ public class ClientPlayer : MonoBehaviour
     {
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         rb.angularDrag = 0;
+        rb.useGravity = true;
         heldObject.layer = 0;
         heldObject = null;
     }
@@ -84,10 +90,14 @@ public class ClientPlayer : MonoBehaviour
     void PlaceObject(RaycastHit hit)
     {
         Destroy(heldObject.GetComponent<Rigidbody>());
-        heldObject.transform.position =  hit.transform.position - Vector3.down;
+        heldObject.transform.position =  hit.transform.position + new Vector3(0,hit.transform.localScale.y/2,0);
         heldObject.transform.localRotation =  Quaternion.Euler(0,(objectrotation*90)%360,0);
         heldObject.layer = 0;
         heldObject = null;
+        GameObject temp = heldObject;
+        gridSystem.UpdateChunk(hit.transform.gameObject, 1, objectrotation);
+        //Debug.Log(int.Parse(temp.name));
+        Debug.Log(int.Parse(temp.name.Split('(')[0]));
     }
 
     void CreateGhostObject()
@@ -103,6 +113,7 @@ public class ClientPlayer : MonoBehaviour
     {
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         rb.useGravity = true;
+        rb.drag = 0;
         rb.AddForce(transform.forward * throwForce,ForceMode.Impulse);
         heldObject.layer = 0;
         heldObject = null;
@@ -111,17 +122,17 @@ public class ClientPlayer : MonoBehaviour
     {     
         while(heldObject != null)
         {
-            RaycastHit hit;
-            if (Physics.Raycast(cam.transform.position, cam.transform.TransformDirection(Vector3.forward), out hit, interactionDistance))
+            RaycastHit hit2;
+            if (Physics.Raycast(cam.transform.position, cam.transform.TransformDirection(Vector3.forward), out hit2, interactionDistance))
             {
                 ghostObject.transform.localRotation =  Quaternion.Euler(0,(objectrotation*90)%360,0);
-                if(hit.transform.gameObject.tag == "Grid"){
+                if(hit2.transform.gameObject.tag == "Grid"){
                     ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/1");
-                    ghostObject.transform.position = hit.transform.position - Vector3.down;
+                    ghostObject.transform.position = hit2.transform.position + new Vector3(0,hit2.transform.localScale.y/2,0);
                 }
                 else{
                     ghostObject.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/0");
-                    ghostObject.transform.position = hit.point - Vector3.down;
+                    ghostObject.transform.position = hit2.point - Vector3.down;
                 }
             }
             yield return new WaitForSeconds(0.05f);
@@ -241,7 +252,6 @@ public class ClientPlayer : MonoBehaviour
             EquipWeapon(-1);
 
         // hit object
-        RaycastHit hit;
         bool raycastHit = Physics.Raycast(cam.transform.position, cam.transform.TransformDirection(Vector3.forward), out hit, interactionDistance);
         if (heldObject == null)
         {
@@ -255,14 +265,14 @@ public class ClientPlayer : MonoBehaviour
         else
         {
             if (ActiveInteractActionKey())
-                if (hit.transform.tag == "Grid")
+                if (raycastHit && hit.transform.tag == "Grid")
                     PlaceObject(hit);//ammeliorer pour rendre l'objet fixe et voir si oui ou non on met 1 objet sur chaque grid
                 else
                     DropObject();
             else if(ActiveThrowActionKey())
                 ThrowObject();
             else if(ActiveRotateActionKey())
-                Debug.Log("test");//RotateObject();
+                RotateObject();
             else
                 MoveObject();
         }
@@ -277,6 +287,9 @@ public class ClientPlayer : MonoBehaviour
         else{
             //UpdatePlayerStatesTopServerRpc(PlayerStateTop.IdleTop);
         }
+    }
+    private void RotateObject() {
+        Clamp(4, ref objectrotation, 1);
     }
 
     private static bool ActiveRunningActionKey()

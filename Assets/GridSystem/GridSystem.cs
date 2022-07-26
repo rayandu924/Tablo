@@ -17,9 +17,6 @@ public class GridSystem : MonoBehaviour
     private void Start() {
         Map = new GameObject("Map");
         dbConnection = new DbConnection("Map", "MapCollection");
-        dbConnection.collection.Database.DropCollection("MapCollection");
-        dbConnection.collection.Database.CreateCollection("MapCollection");
-        dbConnection = new DbConnection("Map", "MapCollection");
         LoadChunks();
     }
 
@@ -73,9 +70,24 @@ public class GridSystem : MonoBehaviour
 
     private void CreateGrid(GameObject chunk, int x, int z, string _gridData)
     {
-        List<int> gridData = _gridData.Split(',').Select(Int32.Parse).ToList();
-        GameObject grid = Instantiate(Resources.Load<GameObject>("GridPrefabs/0"), new Vector3(x,gridData[1],z), Quaternion.Euler(new Vector3(0,0,0)),chunk.transform);
+        List<string> gridData = _gridData.Split(',').ToList();
+        GameObject grid = Instantiate(Resources.Load<GameObject>("Grid"), new Vector3(x,int.Parse(gridData[1]),z), Quaternion.Euler(new Vector3(0,0,0)),chunk.transform);
         grid.transform.GetComponent<MeshRenderer>().material = Resources.Load<Material>("Materials/"+gridData[0]);
+        if(gridData[2] != "0")
+        {
+            List<string> buildData = gridData[2].Split('/').ToList();
+            GameObject build = Instantiate(Resources.Load<GameObject>("BuildingPrefabs/"+buildData[0]), new Vector3(x,int.Parse(gridData[1])+grid.transform.localScale.y/2,z), Quaternion.Euler(0,(int.Parse(buildData[1])*90)%360,0),grid.transform);
+        }
+    }
+    public async void UpdateChunk(GameObject grid, int obj, int rotation) {
+        GameObject chunk = grid.transform.parent.gameObject;
+        var TaskgridsJson = dbConnection.ReadGrids(Mathf.RoundToInt(chunk.transform.position.x),Mathf.RoundToInt(chunk.transform.position.z));
+        var gridsJson = await TaskgridsJson;
+        List<string> grids = gridsJson.tiles.Split(';').ToList();
+        List<string> grid_ = grids[grid.transform.GetSiblingIndex()].Split(',').ToList();
+        grid_[2] =  obj.ToString() +"/"+ rotation.ToString();
+        grids[grid.transform.GetSiblingIndex()] = String.Join(",", grid_);
+        await dbConnection.UpdateGrids(Mathf.RoundToInt(chunk.transform.position.x), Mathf.RoundToInt(chunk.transform.position.z),String.Join(";", grids));
     }
 
     private int PerlinNoise(float x, float y, int noiseScale, int ampli){
